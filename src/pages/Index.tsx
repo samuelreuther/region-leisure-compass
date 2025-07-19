@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { MapPin, Compass, Calendar, Star } from "lucide-react";
+import { MapPin, Compass, Calendar, Star, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
 import ActivityCard from "@/components/ActivityCard";
 import LocationSearch from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
+import { DatePicker } from "@/components/DatePicker";
+import DataSourcesInfo from "@/components/DataSourcesInfo";
 import heroImage from "@/assets/hero-background.jpg";
 
 const Index = () => {
   const [currentLocation, setCurrentLocation] = useState("Lörrach, Germany");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [filters, setFilters] = useState({
     category: "all" as "all" | "outdoor" | "indoor",
     familyFriendly: false,
@@ -171,8 +174,8 @@ const Index = () => {
       {/* Main Content */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          {/* Location & Weather */}
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
+          {/* Location, Date & Weather */}
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <MapPin className="h-6 w-6 text-nature-green" />
@@ -182,6 +185,45 @@ const Index = () => {
                 currentLocation={currentLocation}
                 onLocationSelect={setCurrentLocation}
               />
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-nature-orange" />
+                Select Date
+              </h2>
+              <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
+              <div className="mt-4 space-y-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(new Date())}
+                  className="w-full"
+                >
+                  Today
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))}
+                  className="w-full"
+                >
+                  Tomorrow
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const nextSaturday = new Date();
+                    const daysUntilSaturday = (6 - nextSaturday.getDay()) % 7 || 7;
+                    nextSaturday.setDate(nextSaturday.getDate() + daysUntilSaturday);
+                    setSelectedDate(nextSaturday);
+                  }}
+                  className="w-full"
+                >
+                  Next Weekend
+                </Button>
+              </div>
             </div>
             
             <div>
@@ -205,7 +247,12 @@ const Index = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <Star className="h-6 w-6 text-nature-orange" />
-                  Recommended Activities
+                  Activities for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  }) : 'Selected Date'}
                 </h2>
                 <span className="text-muted-foreground">
                   {filteredActivities.length} activities found
@@ -242,6 +289,15 @@ const Index = () => {
                 </Card>
               )}
             </div>
+          </div>
+
+          {/* Data Sources Information */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Info className="h-6 w-6 text-nature-blue" />
+              How We Find Your Activities
+            </h2>
+            <DataSourcesInfo />
           </div>
         </div>
       </section>
