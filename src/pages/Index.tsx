@@ -20,17 +20,24 @@ const Index = () => {
     priceRange: "all" as "free" | "budget" | "premium" | "all"
   });
 
-  // Mock weather data
+  // Mock weather data with forecast
   const mockWeather = {
     location: currentLocation,
-    temperature: 22,
-    condition: "sunny" as const,
-    description: "Perfect weekend weather",
-    humidity: 65,
-    windSpeed: 8
+    today: [
+      { time: "Morning", temperature: 18, condition: "sunny" as const, icon: null },
+      { time: "Noon", temperature: 24, condition: "sunny" as const, icon: null },
+      { time: "Afternoon", temperature: 26, condition: "cloudy" as const, icon: null },
+      { time: "Evening", temperature: 20, condition: "cloudy" as const, icon: null }
+    ],
+    tomorrow: [
+      { time: "Morning", temperature: 16, condition: "cloudy" as const, icon: null },
+      { time: "Noon", temperature: 22, condition: "rainy" as const, icon: null },
+      { time: "Afternoon", temperature: 19, condition: "rainy" as const, icon: null },
+      { time: "Evening", temperature: 17, condition: "cloudy" as const, icon: null }
+    ]
   };
 
-  // Mock activities data
+  // Mock activities data with voting
   const mockActivities = [
     {
       id: "1",
@@ -45,7 +52,8 @@ const Index = () => {
       familyFriendly: true,
       weatherDependent: true,
       image: "/placeholder.svg",
-      tags: ["Water Sports", "Adventure", "Scenic"]
+      tags: ["Water Sports", "Adventure", "Scenic"],
+      votes: { thumbsUp: 127, thumbsDown: 8 }
     },
     {
       id: "2", 
@@ -60,7 +68,8 @@ const Index = () => {
       familyFriendly: true,
       weatherDependent: false,
       image: "/placeholder.svg",
-      tags: ["Culture", "Design", "Art"]
+      tags: ["Culture", "Design", "Art"],
+      votes: { thumbsUp: 89, thumbsDown: 12 }
     },
     {
       id: "3",
@@ -75,7 +84,8 @@ const Index = () => {
       familyFriendly: true,
       weatherDependent: true,
       image: "/placeholder.svg",
-      tags: ["Hiking", "Nature", "Forest"]
+      tags: ["Hiking", "Nature", "Forest"],
+      votes: { thumbsUp: 203, thumbsDown: 5 }
     },
     {
       id: "4",
@@ -90,7 +100,8 @@ const Index = () => {
       familyFriendly: false,
       weatherDependent: false,
       image: "/placeholder.svg",
-      tags: ["Music", "Culture", "Evening"]
+      tags: ["Music", "Culture", "Evening"],
+      votes: { thumbsUp: 156, thumbsDown: 23 }
     },
     {
       id: "5",
@@ -105,7 +116,8 @@ const Index = () => {
       familyFriendly: true,
       weatherDependent: true,
       image: "/placeholder.svg",
-      tags: ["Swimming", "Lake", "Beach"]
+      tags: ["Swimming", "Lake", "Beach"],
+      votes: { thumbsUp: 98, thumbsDown: 7 }
     },
     {
       id: "6",
@@ -120,7 +132,8 @@ const Index = () => {
       familyFriendly: true,
       weatherDependent: false,
       image: "/placeholder.svg",
-      tags: ["Theme Park", "Family", "Adventure"]
+      tags: ["Theme Park", "Family", "Adventure"],
+      votes: { thumbsUp: 342, thumbsDown: 18 }
     }
   ];
 
@@ -262,7 +275,14 @@ const Index = () => {
               {filteredActivities.length > 0 ? (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredActivities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} />
+                    <ActivityCard 
+                      key={activity.id} 
+                      activity={activity}
+                      onVote={(activityId, type) => {
+                        console.log(`Voted ${type} on activity ${activityId}`);
+                        // In a real app, this would update the database
+                      }}
+                    />
                   ))}
                 </div>
               ) : (

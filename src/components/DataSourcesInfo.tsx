@@ -147,7 +147,7 @@ const DataSourcesInfo = () => {
             <li>• Live event feeds from Facebook Events, Meetup, and local event platforms</li>
             <li>• Real-time availability and booking for outdoor activities</li>
             <li>• Cross-border event discovery (Germany, Switzerland, France)</li>
-            <li>• User-generated content and reviews</li>
+            <li>• Community voting system for activity recommendations</li>
             <li>• Seasonal activity recommendations</li>
           </ul>
         </div>
