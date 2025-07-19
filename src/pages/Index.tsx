@@ -1,12 +1,250 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { MapPin, Compass, Calendar, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import WeatherCard from "@/components/WeatherCard";
+import ActivityCard from "@/components/ActivityCard";
+import LocationSearch from "@/components/LocationSearch";
+import ActivityFilters from "@/components/ActivityFilters";
+import heroImage from "@/assets/hero-background.jpg";
 
 const Index = () => {
+  const [currentLocation, setCurrentLocation] = useState("Lörrach, Germany");
+  const [filters, setFilters] = useState({
+    category: "all" as "all" | "outdoor" | "indoor",
+    familyFriendly: false,
+    maxDistance: 50,
+    priceRange: "all" as "free" | "budget" | "premium" | "all"
+  });
+
+  // Mock weather data
+  const mockWeather = {
+    location: currentLocation,
+    temperature: 22,
+    condition: "sunny" as const,
+    description: "Perfect weekend weather",
+    humidity: 65,
+    windSpeed: 8
+  };
+
+  // Mock activities data
+  const mockActivities = [
+    {
+      id: "1",
+      title: "Rhine River SUP Tour",
+      description: "Stand-up paddleboarding adventure along the scenic Rhine River with stunning views of the Black Forest.",
+      category: "outdoor" as const,
+      location: "Rheinfelden",
+      distance: 12,
+      duration: "3-4 hours",
+      rating: 4.8,
+      price: "€45",
+      familyFriendly: true,
+      weatherDependent: true,
+      image: "/placeholder.svg",
+      tags: ["Water Sports", "Adventure", "Scenic"]
+    },
+    {
+      id: "2", 
+      title: "Vitra Design Museum",
+      description: "Explore world-class design exhibitions in this iconic Frank Gehry building across the border in Weil am Rhein.",
+      category: "indoor" as const,
+      location: "Weil am Rhein",
+      distance: 8,
+      duration: "2-3 hours",
+      rating: 4.6,
+      price: "€16",
+      familyFriendly: true,
+      weatherDependent: false,
+      image: "/placeholder.svg",
+      tags: ["Culture", "Design", "Art"]
+    },
+    {
+      id: "3",
+      title: "Black Forest Hiking Trail",
+      description: "Family-friendly hiking trail through ancient forests with waterfalls and panoramic viewpoints.",
+      category: "outdoor" as const,
+      location: "Todtnau",
+      distance: 35,
+      duration: "Half day",
+      rating: 4.9,
+      price: "Free",
+      familyFriendly: true,
+      weatherDependent: true,
+      image: "/placeholder.svg",
+      tags: ["Hiking", "Nature", "Forest"]
+    },
+    {
+      id: "4",
+      title: "Basel Jazz Festival",
+      description: "Weekend jazz performances in the heart of Basel featuring local and international artists.",
+      category: "indoor" as const,
+      location: "Basel, Switzerland",
+      distance: 15,
+      duration: "Evening",
+      rating: 4.7,
+      price: "€35",
+      familyFriendly: false,
+      weatherDependent: false,
+      image: "/placeholder.svg",
+      tags: ["Music", "Culture", "Evening"]
+    },
+    {
+      id: "5",
+      title: "Lake Schluchsee Swimming",
+      description: "Crystal clear mountain lake perfect for swimming, with sandy beaches and mountain views.",
+      category: "outdoor" as const,
+      location: "Schluchsee",
+      distance: 45,
+      duration: "Full day",
+      rating: 4.5,
+      price: "€8",
+      familyFriendly: true,
+      weatherDependent: true,
+      image: "/placeholder.svg",
+      tags: ["Swimming", "Lake", "Beach"]
+    },
+    {
+      id: "6",
+      title: "Europa-Park Indoor Areas",
+      description: "Experience thrilling indoor attractions and shows at Germany's largest theme park.",
+      category: "indoor" as const,
+      location: "Rust",
+      distance: 60,
+      duration: "Full day",
+      rating: 4.9,
+      price: "€56",
+      familyFriendly: true,
+      weatherDependent: false,
+      image: "/placeholder.svg",
+      tags: ["Theme Park", "Family", "Adventure"]
+    }
+  ];
+
+  const filteredActivities = mockActivities.filter(activity => {
+    if (filters.category !== "all" && activity.category !== filters.category) return false;
+    if (filters.familyFriendly && !activity.familyFriendly) return false;
+    if (activity.distance > filters.maxDistance) return false;
+    if (filters.priceRange !== "all") {
+      const price = activity.price.toLowerCase();
+      if (filters.priceRange === "free" && !price.includes("free")) return false;
+      if (filters.priceRange === "budget" && (price.includes("free") || parseInt(price.replace(/\D/g, "")) > 30)) return false;
+      if (filters.priceRange === "premium" && parseInt(price.replace(/\D/g, "")) < 40) return false;
+    }
+    return true;
+  });
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+        </div>
+        
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
+            Discover Your
+            <span className="block bg-gradient-to-r from-nature-blue to-nature-green bg-clip-text text-transparent">
+              Regional Adventures
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto animate-fade-in">
+            Find the perfect activities for your weekend, from outdoor adventures to cultural experiences - all tailored to the weather and your location.
+          </p>
+          <Button variant="hero" size="lg" className="animate-scale-in">
+            <Compass className="mr-2 h-5 w-5" />
+            Start Exploring
+          </Button>
+        </div>
+        
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-float">
+          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse" />
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Location & Weather */}
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            <div>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-nature-green" />
+                Your Location
+              </h2>
+              <LocationSearch 
+                currentLocation={currentLocation}
+                onLocationSelect={setCurrentLocation}
+              />
+            </div>
+            
+            <div>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-nature-blue" />
+                Weather Forecast
+              </h2>
+              <WeatherCard weather={mockWeather} />
+            </div>
+          </div>
+
+          {/* Activities Section */}
+          <div className="grid lg:grid-cols-4 gap-8">
+            {/* Filters Sidebar */}
+            <div className="lg:col-span-1">
+              <ActivityFilters filters={filters} onFiltersChange={setFilters} />
+            </div>
+
+            {/* Activities Grid */}
+            <div className="lg:col-span-3">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Star className="h-6 w-6 text-nature-orange" />
+                  Recommended Activities
+                </h2>
+                <span className="text-muted-foreground">
+                  {filteredActivities.length} activities found
+                </span>
+              </div>
+
+              {filteredActivities.length > 0 ? (
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredActivities.map((activity) => (
+                    <ActivityCard key={activity.id} activity={activity} />
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-16">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold mb-2">No activities found</h3>
+                    <p className="text-muted-foreground text-center">
+                      Try adjusting your filters or search in a different location to discover more activities.
+                    </p>
+                    <Button 
+                      variant="nature" 
+                      className="mt-4"
+                      onClick={() => setFilters({
+                        category: "all",
+                        familyFriendly: false,
+                        maxDistance: 100,
+                        priceRange: "all"
+                      })}
+                    >
+                      Clear Filters
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
