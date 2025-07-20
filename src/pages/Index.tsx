@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapPin, Compass, Calendar, Star, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Compass, Calendar, Star, Info, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
@@ -8,6 +8,10 @@ import LocationSearch from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
 import { DatePicker } from "@/components/DatePicker";
 import DataSourcesInfo from "@/components/DataSourcesInfo";
+import { AuthButton } from "@/components/auth/AuthButton";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import heroImage from "@/assets/hero-background.jpg";
 
 const Index = () => {
@@ -19,6 +23,10 @@ const Index = () => {
     maxDistance: 50,
     priceRange: "all" as "free" | "budget" | "premium" | "all"
   });
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   // Mock weather data with forecast
   const mockWeather = {
@@ -137,7 +145,66 @@ const Index = () => {
     }
   ];
 
-  const filteredActivities = mockActivities.filter(activity => {
+  // Fetch activities from Supabase and external sources
+  const fetchAllActivities = async () => {
+    setLoadingActivities(true);
+    try {
+      // Fetch from database
+      const { data: dbActivities, error } = await supabase
+        .from('activities')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch live events
+      await supabase.functions.invoke('fetch-events', {
+        body: { location: currentLocation, radius: filters.maxDistance }
+      });
+
+      // Fetch Komoot activities
+      await supabase.functions.invoke('fetch-komoot-activities', {
+        body: { location: currentLocation, radius: filters.maxDistance }
+      });
+
+      // Fetch places
+      await supabase.functions.invoke('fetch-places', {
+        body: { location: currentLocation, radius: filters.maxDistance }
+      });
+
+      // Refresh data after fetching new activities
+      const { data: updatedActivities } = await supabase
+        .from('activities')
+        .select('*')
+        .order('rating', { ascending: false });
+
+      // Combine with mock data for now
+      const allActivities = [...mockActivities, ...(updatedActivities || [])];
+      setActivities(allActivities);
+
+      toast({
+        title: "Activities updated",
+        description: `Found ${allActivities.length} activities in your area.`,
+      });
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      setActivities(mockActivities); // Fallback to mock data
+      toast({
+        title: "Using cached data",
+        description: "Couldn't fetch latest activities, showing cached results.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllActivities();
+  }, [currentLocation, filters.maxDistance]);
+
+  const activitiesToFilter = activities.length > 0 ? activities : mockActivities;
+  const filteredActivities = activitiesToFilter.filter(activity => {
     if (filters.category !== "all" && activity.category !== filters.category) return false;
     if (filters.familyFriendly && !activity.familyFriendly) return false;
     if (activity.distance > filters.maxDistance) return false;
@@ -159,6 +226,10 @@ const Index = () => {
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+        </div>
+        
+        <div className="absolute top-6 right-6 z-10">
+          <AuthButton />
         </div>
         
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
@@ -267,9 +338,20 @@ const Index = () => {
                     day: 'numeric' 
                   }) : 'Selected Date'}
                 </h2>
-                <span className="text-muted-foreground">
-                  {filteredActivities.length} activities found
-                </span>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchAllActivities}
+                    disabled={loadingActivities}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingActivities ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <span className="text-muted-foreground">
+                    {filteredActivities.length} activities found
+                  </span>
+                </div>
               </div>
 
               {filteredActivities.length > 0 ? (

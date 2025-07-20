@@ -1,1 +1,10 @@
 project_id = "rljgxjdcxpwgfiaexpmm"
+
+[functions.fetch-events]
+verify_jwt = false
+
+[functions.fetch-komoot-activities] 
+verify_jwt = false
+
+[functions.fetch-places]
+verify_jwt = false
