@@ -14,7 +14,163 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          category: string
+          coordinates: unknown | null
+          created_at: string
+          description: string | null
+          difficulty_level: number | null
+          duration_minutes: number | null
+          external_id: string | null
+          id: string
+          image_url: string | null
+          is_indoor: boolean | null
+          is_outdoor: boolean | null
+          location: string
+          price_range: string | null
+          rating: number | null
+          source: string
+          title: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          category: string
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          duration_minutes?: number | null
+          external_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_indoor?: boolean | null
+          is_outdoor?: boolean | null
+          location: string
+          price_range?: string | null
+          rating?: number | null
+          source: string
+          title: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: string
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          duration_minutes?: number | null
+          external_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_indoor?: boolean | null
+          is_outdoor?: boolean | null
+          location?: string
+          price_range?: string | null
+          rating?: number | null
+          source?: string
+          title?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          preferred_location: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          preferred_location?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          preferred_location?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_activity_ratings: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_ratings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorites: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
