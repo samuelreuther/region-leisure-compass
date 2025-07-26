@@ -298,6 +298,27 @@ const Index = () => {
                 >
                   Tomorrow
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const today = new Date();
+                    const day = today.getDay();
+                    let weekend;
+                    if (day === 6 || day === 0) {
+                      // already Saturday or Sunday → today
+                      weekend = today;
+                    } else {
+                      // next Saturday
+                      weekend = new Date(today);
+                      weekend.setDate(today.getDate() + ((6 - day) % 7));
+                    }
+                    setSelectedDate(weekend);
+                  }}
+                  className="w-full"
+                  >
+                  This Weekend
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
