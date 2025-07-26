@@ -13,7 +13,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import heroImage from "@/assets/hero-background.jpg";
-import { useEffect, useState } from "react";
 import WeatherCard from "@/components/WeatherCard";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 
