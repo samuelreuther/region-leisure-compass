@@ -13,6 +13,38 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import heroImage from "@/assets/hero-background.jpg";
+import { useEffect, useState } from "react";
+import WeatherCard from "@/components/WeatherCard";
+import { fetchWeather, WeatherData } from "@/integrations/weather";
+
+export default function IndexPage() {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const data = await fetchWeather(pos.coords.latitude, pos.coords.longitude);
+          setWeather(data);
+        } catch (err) {
+          setWeather(null);
+        }
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
+  }, []);
+
+  return (
+    <div>
+      {loading && <p>Lade Wetterdaten…</p>}
+      {weather && <WeatherCard weather={weather} />}
+      {!weather && !loading && <p>Konnte Wetterdaten nicht laden.</p>}
+    </div>
+  );
+}
 
 const Index = () => {
   const [currentLocation, setCurrentLocation] = useState("Lörrach, Germany");
