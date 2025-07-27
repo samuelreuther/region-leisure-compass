@@ -258,7 +258,7 @@ export default function Index() {
                 </div>
               </div>
               {/* Mixed Grid */}
-              {(loadingActivities || loadingEvents || loadingEB) ? (
+              {(loadingActivities || loadingEvents) ? (
                 <p>Loading…</p>
               ) : topItems.length > 0 ? (
                 <>
