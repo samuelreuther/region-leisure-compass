@@ -64,10 +64,12 @@ export async function fetchEventbriteEvents(
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
   if (!response.ok) {
-    throw new Error("Failed to fetch Eventbrite events");
+    const err = await response.text();
+    throw new Error(`Eventbrite API error: ${response.status} - ${err}`);
   }
   const data = await response.json();
   // Transformiere die Events für dein Frontend
