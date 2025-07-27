@@ -183,7 +183,82 @@ export default function Index() {
               {!weather && !loadingWeather && <p>Konnte Wetterdaten nicht laden.</p>}
             </div>
           </div>
-          {/* Activities Section ... */}
+          {/* Activities Section */}
+<div className="grid lg:grid-cols-4 gap-8">
+  {/* Filters Sidebar */}
+  <div className="lg:col-span-1">
+    <ActivityFilters
+      filters={filters}
+      onFiltersChange={setFilters}
+    />
+  </div>
+
+  {/* Activities Grid */}
+  <div className="lg:col-span-3">
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
+        <Star className="h-6 w-6 text-nature-orange" />
+        Activities for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) : 'Selected Date'}
+      </h2>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchAllActivities}
+          disabled={loadingActivities}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loadingActivities ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+        <span className="text-muted-foreground">
+          {filteredActivities.length} activities found
+        </span>
+      </div>
+    </div>
+
+    {filteredActivities.length > 0 ? (
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredActivities.map((activity) => (
+          <ActivityCard 
+            key={activity.id} 
+            activity={activity}
+            onVote={(activityId, type) => {
+              // Optionale Voting-Logik
+            }}
+          />
+        ))}
+      </div>
+    ) : (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="text-6xl mb-4">🔍</div>
+          <h3 className="text-xl font-semibold mb-2">No activities found</h3>
+          <p className="text-muted-foreground text-center">
+            Try adjusting your filters or search in a different location to discover more activities.
+          </p>
+          <Button 
+            variant="nature" 
+            className="mt-4"
+            onClick={() => setFilters({
+              category: "all",
+              familyFriendly: false,
+              maxDistance: 100,
+              priceRange: "all"
+            })}
+          >
+            Clear Filters
+          </Button>
+        </CardContent>
+      </Card>
+    )}
+  </div>
+</div>
+
           {/* ...deine Aktivitäten, Filter etc... */}
           {/* Events Section */}
           <div className="mt-16">
