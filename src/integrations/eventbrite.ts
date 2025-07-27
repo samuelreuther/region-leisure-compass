@@ -15,6 +15,20 @@ export interface EventbriteEvent {
   distance?: number;
 }
 
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export async function fetchEventbriteEvents(
   lat: number,
   lon: number,
@@ -33,4 +47,31 @@ export async function fetchEventbriteEvents(
   const url = `https://www.eventbriteapi.com/v3/events/search/?location.latitude=${lat}&location.longitude=${lon}&location.within=${radiusKm}km&start_date.range_start=${startStr}Z&start_date.range_end=${endStr}Z&expand=venue,category,logo&sort_by=date&token=${token}`;
 
   const res = await fetch(url);
-  if (!res.ok) throw new Erro
+  if (!res.ok) throw new Error("Failed to fetch Eventbrite events");
+  const data = await res.json();
+
+  return (data.events || []).slice(0, maxResults).map((e: any) => {
+    const venueLat = parseFloat(e.venue?.address?.latitude) || 0;
+    const venueLon = parseFloat(e.venue?.address?.longitude) || 0;
+    const distance =
+      venueLat && venueLon
+        ? haversine(lat, lon, venueLat, venueLon)
+        : null;
+    return {
+      id: e.id,
+      name: e.name.text,
+      description: e.description?.text || "",
+      url: e.url,
+      start: e.start.local,
+      end: e.end.local,
+      city: e.venue?.address?.city || "",
+      venue: e.venue?.name || "",
+      image: e.logo?.url || null,
+      price: e.is_free ? "Free" : null,
+      category: e.category?.name || null,
+      lat: venueLat,
+      lon: venueLon,
+      distance,
+    };
+  });
+}
