@@ -58,6 +58,9 @@ export async function fetchEventbriteEvents(
 
   const url = `https://www.eventbriteapi.com/v3/events/search/?location.latitude=${lat}&location.longitude=${lon}&location.within=${radiusKm}km&start_date.range_start=${startStr}&start_date.range_end=${endStr}&expand=venue,category,logo&sort_by=date`;
 
+  console.log("Eventbrite URL:", url);
+  console.log("Eventbrite API token:", token);
+  
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
