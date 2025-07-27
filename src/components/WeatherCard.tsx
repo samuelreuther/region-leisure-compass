@@ -1,6 +1,8 @@
 import { Cloud, Sun, CloudRain, Snowflake } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
+const dayParts = ["Morning", "Noon", "Afternoon", "Evening"];
+
 interface WeatherPeriod {
   time: string;
   temperature: number;
@@ -17,7 +19,6 @@ interface WeatherCardProps {
   weather: WeatherData;
 }
 
-// Neu!
 function normalizeCondition(raw: string): "sunny" | "cloudy" | "rainy" | "snowy" {
   const c = raw.toLowerCase();
   if (c.includes("sun") || c.includes("clear")) return "sunny";
@@ -25,6 +26,14 @@ function normalizeCondition(raw: string): "sunny" | "cloudy" | "rainy" | "snowy"
   if (c.includes("snow")) return "snowy";
   if (c.includes("cloud") || c.includes("overcast") || c.includes("fog") || c.includes("mist")) return "cloudy";
   return "cloudy";
+}
+
+function mapPeriods(periods: WeatherPeriod[]): WeatherPeriod[] {
+  return dayParts.map((part, i) =>
+    periods[i]
+      ? { ...periods[i], time: part }
+      : { time: part, temperature: 0, condition: "cloudy" }
+  );
 }
 
 const WeatherCard = ({ weather }: WeatherCardProps) => {
@@ -44,36 +53,39 @@ const WeatherCard = ({ weather }: WeatherCardProps) => {
     }
   };
 
-  const renderWeatherPeriods = (periods: WeatherPeriod[], title: string) => (
-    <div className="space-y-3">
-      <h4 className="font-medium text-sm text-muted-foreground">{title}</h4>
-      <div className="grid grid-cols-4 gap-2">
-        {periods.map((period) => {
-      const norm = normalizeCondition(period.condition);
-      const color =
-        norm === "sunny"
-        ? "bg-yellow-100"
-        : norm === "rainy"
-        ? "bg-blue-100"
-        : norm === "cloudy"
-        ? "bg-gray-100"
-        : "bg-white";
-      return (
-        <div
-          key={period.time}
-          className={`text-center p-2 rounded-lg ${color}`}
-          >
-          <p className="text-xs text-muted-foreground mb-1">{period.time}</p>
-          <div className="flex justify-center mb-1">
-            {getWeatherIcon(norm, "h-4 w-4")}
+  const renderWeatherPeriods = (periods: WeatherPeriod[], title: string) => {
+    const fixedPeriods = mapPeriods(periods);
+    return (
+      <div className="space-y-3">
+        <h4 className="font-medium text-sm text-muted-foreground">{title}</h4>
+        <div className="grid grid-cols-4 gap-2">
+          {fixedPeriods.map((period) => {
+        const norm = normalizeCondition(period.condition);
+        const color =
+          norm === "sunny"
+          ? "bg-yellow-100"
+          : norm === "rainy"
+          ? "bg-blue-100"
+          : norm === "cloudy"
+          ? "bg-gray-100"
+          : "bg-white";
+        return (
+          <div
+            key={period.time}
+            className={`text-center p-2 rounded-lg ${color}`}
+            >
+            <p className="text-xs text-muted-foreground mb-1">{period.time}</p>
+            <div className="flex justify-center mb-1">
+              {getWeatherIcon(norm, "h-4 w-4")}
+            </div>
+            <p className="text-sm font-medium">{period.temperature}°C</p>
           </div>
-          <p className="text-sm font-medium">{period.temperature}°C</p>
+        );
+      })}
         </div>
-      );
-    })}
       </div>
-    </div>
-  );
+    );
+  };
   
   return (
     <Card className="transition-all duration-300 hover:shadow-lg">
