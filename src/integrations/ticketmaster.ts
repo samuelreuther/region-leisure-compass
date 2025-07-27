@@ -16,7 +16,8 @@ export type TicketmasterEvent = {
 export async function fetchTicketmasterEvents(
   lat: number,
   lon: number,
-  date: Date
+  date: Date,
+  radiusKm = 100
 ): Promise<TicketmasterEvent[]> {
   // Zeitraum berechnen (ein Tag)
   const y = date.getFullYear();
