@@ -21,9 +21,6 @@ const suggestions: LocationData[] = [
   { name: "Lörrach, Germany", lat: 47.6149, lon: 7.6647 },
   { name: "Basel, Switzerland", lat: 47.5596, lon: 7.5886 },
   { name: "Freiburg, Germany", lat: 47.9990, lon: 7.8421 },
-  { name: "Strasbourg, France", lat: 48.5734, lon: 7.7521 },
-  { name: "Colmar, France", lat: 48.0792, lon: 7.3585 },
-  { name: "Baden-Baden, Germany", lat: 48.7606, lon: 8.2398 },
 ];
 
 const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchProps) => {
