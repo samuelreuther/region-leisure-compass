@@ -16,7 +16,8 @@ export type TicketmasterEvent = {
 export async function fetchTicketmasterEvents(
   lat: number,
   lon: number,
-  date: Date,
+  selectedDate.start: Date, 
+  selectedDate.end: Date,
   radiusKm = 100 // <--- always gets passed in!
 ): Promise<TicketmasterEvent[]> {
   // Date range for one day
