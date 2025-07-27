@@ -102,6 +102,8 @@ export default function Index() {
   // Eventbrite
   useEffect(() => {
     setLoadingEB(true);
+    console.log("Eventbrite URL:", url);
+    console.log("Eventbrite API token:", token);
     fetchEventbriteEvents(
       currentLocation.lat,
       currentLocation.lon,
