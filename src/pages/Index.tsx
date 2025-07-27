@@ -32,7 +32,7 @@ export default function Index() {
     lat: 47.6149,
     lon: 7.6647,
   });
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | { start: Date, end: Date }>(new Date());
   const [filters, setFilters] = useState({
     category: "all" as "all" | "outdoor" | "indoor",
     familyFriendly: false,
@@ -55,6 +55,46 @@ export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  function getThisWeekendDates() {
+    const today = new Date();
+    const day = today.getDay(); // 0=Sun, 6=Sat
+    if (day === 0) {
+      // Today is Sunday
+      return { start: today, end: today };
+    }
+    // Next Saturday
+    const saturday = new Date(today);
+    saturday.setDate(today.getDate() + (6 - day));
+    const sunday = new Date(saturday);
+    sunday.setDate(saturday.getDate() + 1);
+    return { start: saturday, end: sunday };
+  }
+
+  function isWithinDateRange(
+    itemDate: string | Date,
+    selected: Date | { start: Date; end: Date }
+  ) {
+    const d = new Date(itemDate);
+    if ('start' in selected && 'end' in selected) {
+      return d >= selected.start && d <= selected.end;
+    }
+    return d.toDateString() === new Date(selected).toDateString();
+  }
+
+  function getSelectedDateLabel(selected: Date | { start: Date, end: Date }) {
+    if ('start' in selected && 'end' in selected) {
+      const startStr = selected.start.toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' });
+      const endStr = selected.end.toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' });
+      if (selected.start.toDateString() === selected.end.toDateString()) {
+        // If Sat==Sun (should only be Sunday)
+        return startStr;
+      }
+      return `${startStr} – ${endStr}`;
+    }
+    // Single day
+    return new Date(selected).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+  
   // Weather
   useEffect(() => {
     setLoadingWeather(true);
@@ -110,26 +150,22 @@ export default function Index() {
     })),
   ];
 
-  // const filteredItems = mergedItems.filter(item => {
-    // if (filters.category !== "all" && item.category !== filters.category) return false;
-    // if (filters.familyFriendly && !item.familyFriendly) return false;
-    // if (item.__type === "activity" && item.distance > filters.maxDistance) return false;
-    // return true;
-  // });
   const filteredItems = mergedItems.filter(item => {
     if (filters.category !== "all" && item.category !== filters.category) return false;
     if (filters.familyFriendly && !item.familyFriendly) return false;
-    // Only filter by distance for activities, not events unless distance is provided and valid (>0)
     if (item.__type === "activity" && item.distance > filters.maxDistance) return false;
+    if (item.start || item.date) {
+      if (!isWithinDateRange(item.start || item.date, weekendRange)) return false;
+    }
     return true;
   });
 
   // Only up to visibleCount
   const topItems = filteredItems.slice(0, visibleCount);
 
-  // Reset visibleCount to 3 on filter/location change
+  // Reset visibleCount to 6 on filter/location change
   useEffect(() => {
-    setVisibleCount(3);
+    setVisibleCount(6);
   }, [currentLocation, selectedDate, filters]);
 
   const getSaturday = (addWeeks = 0) => {
@@ -139,13 +175,6 @@ export default function Index() {
     saturday.setDate(today.getDate() + ((6 - day + 7) % 7) + 7 * addWeeks);
     return saturday;
   };
-
-  useEffect(() => {
-    console.log({
-      activities, events, 
-      mergedItems, filteredItems, filters, currentLocation, selectedDate
-    });
-  }, [activities, events, filters, currentLocation, selectedDate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,10 +239,10 @@ export default function Index() {
                 <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))} className="w-full">
                   Tomorrow
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getSaturday(0))} className="w-full">
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getThisWeekendDates(0))} className="w-full">
                   This Weekend
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getSaturday(1))} className="w-full">
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getThisWeekendDates(1))} className="w-full">
                   Next Weekend
                 </Button>
               </div>
@@ -238,9 +267,7 @@ export default function Index() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                   <Star className="h-6 w-6 text-nature-orange" />
-                  Activities & Events for {selectedDate ? selectedDate.toLocaleDateString('en-US', {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                  }) : 'Selected Date'}
+                  Activities & Events for {getSelectedDateLabel(selectedDate)}
                 </h2>
                 <div className="flex items-center gap-3">
                   <Button
@@ -317,7 +344,7 @@ export default function Index() {
                   {/* Show More Button */}
                   {topItems.length < filteredItems.length && (
                     <div className="flex justify-center mt-8">
-                      <Button variant="secondary" onClick={() => setVisibleCount(visibleCount + 3)}>
+                      <Button variant="secondary" onClick={() => setVisibleCount(visibleCount + 6)}>
                         Show More
                       </Button>
                     </div>
