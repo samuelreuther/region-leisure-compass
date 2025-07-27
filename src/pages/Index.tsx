@@ -13,7 +13,6 @@ import { useToast } from "@/components/ui/use-toast";
 import heroImage from "@/assets/hero-background.jpg";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
-import { fetchEventbriteEvents, EventbriteEvent } from "@/integrations/eventbrite";
 
 // Dummy placeholder for your activities API:
 async function fetchSupabaseActivities(location: LocationData, filters: any) {
@@ -22,8 +21,6 @@ async function fetchSupabaseActivities(location: LocationData, filters: any) {
 }
 
 function SourceBadge({ type }: { type: string }) {
-  if (type === "eventbrite")
-    return <span className="inline-block bg-orange-200 text-orange-700 px-2 py-0.5 rounded text-xs mr-2">Eventbrite</span>;
   if (type === "event")
     return <span className="inline-block bg-purple-200 text-purple-700 px-2 py-0.5 rounded text-xs mr-2">Ticketmaster</span>;
   return <span className="inline-block bg-green-200 text-green-700 px-2 py-0.5 rounded text-xs mr-2">Activity</span>;
@@ -48,9 +45,6 @@ export default function Index() {
 
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
-
-  const [eventbriteEvents, setEventbriteEvents] = useState<EventbriteEvent[]>([]);
-  const [loadingEB, setLoadingEB] = useState(false);
 
   const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -99,26 +93,6 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate, filters.maxDistance]);
 
-  // Eventbrite
-  useEffect(() => {
-    setLoadingEB(true);
-    fetchEventbriteEvents(
-      currentLocation.lat,
-      currentLocation.lon,
-      selectedDate,
-      filters.maxDistance
-    )
-      .then(data => {
-        setEventbriteEvents(data);
-        console.log("Eventbrite Events geladen:", data); // <--- HIER LOG
-      })
-      .catch(err => {
-        setEventbriteEvents([]);
-        console.error("Eventbrite Fehler:", err);        // <--- HIER LOG
-      })
-      .finally(() => setLoadingEB(false));
-  }, [currentLocation, selectedDate, filters.maxDistance]);
-
   // Merge and filter items
   const mergedItems = [
     ...activities.map(a => ({ ...a, __type: "activity" })),
@@ -129,18 +103,6 @@ export default function Index() {
       familyFriendly: true,
       distance: e.distance || 0,
       title: e.name || e.title,
-      url: e.url,
-      venue: e.venue,
-      city: e.city,
-      start: e.start,
-    })),
-    ...eventbriteEvents.map(e => ({
-      ...e,
-      __type: "eventbrite",
-      category: "indoor",
-      familyFriendly: true,
-      distance: e.distance || 0,
-      title: e.name,
       url: e.url,
       venue: e.venue,
       city: e.city,
@@ -180,10 +142,10 @@ export default function Index() {
 
   useEffect(() => {
     console.log({
-      activities, events, eventbriteEvents,
+      activities, events, 
       mergedItems, filteredItems, filters, currentLocation, selectedDate
     });
-  }, [activities, events, eventbriteEvents, filters, currentLocation, selectedDate]);
+  }, [activities, events, filters, currentLocation, selectedDate]);
 
   return (
     <div className="min-h-screen bg-background">
