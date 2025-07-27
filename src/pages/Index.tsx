@@ -166,7 +166,12 @@ export default function Index() {
     return saturday;
   };
 
-  console.log({ activities, events, eventbriteEvents, mergedItems, filteredItems, filters });
+  useEffect(() => {
+    console.log({
+      activities, events, eventbriteEvents,
+      mergedItems, filteredItems, filters, currentLocation, selectedDate
+    });
+  }, [activities, events, eventbriteEvents, filters, currentLocation, selectedDate]);
 
   return (
     <div className="min-h-screen bg-background">
