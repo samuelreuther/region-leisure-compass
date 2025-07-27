@@ -32,7 +32,7 @@ export default function Index() {
     lat: 47.6149,
     lon: 7.6647,
   });
-  const [selectedDate, setSelectedDate] = useState<Date | { start: Date, end: Date }>(new Date());
+  const [selectedDate, setSelectedDate] = useState(getSingleDayRange(new Date()));
   const [filters, setFilters] = useState({
     category: "all" as "all" | "outdoor" | "indoor",
     familyFriendly: false,
@@ -55,21 +55,35 @@ export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  function getThisWeekendDates() {
+  function getThisWeekendDates(offset = 0) {
     const today = new Date();
     const day = today.getDay(); // 0=Sun, 6=Sat
+    let saturday, sunday;
     if (day === 0) {
       // Today is Sunday
-      return { start: today, end: today };
+      saturday = new Date(today); // both start and end = Sunday
+      sunday = new Date(today);
+    } else {
+      // Calculate this Saturday
+      saturday = new Date(today);
+      saturday.setDate(today.getDate() + ((6 - day) % 7) + offset * 7);
+      // Sunday is next day
+      sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+      // If today is Saturday, use today as start
+      if (day === 6) saturday = today;
     }
-    // Next Saturday
-    const saturday = new Date(today);
-    saturday.setDate(today.getDate() + (6 - day));
-    const sunday = new Date(saturday);
-    sunday.setDate(saturday.getDate() + 1);
-    return { start: saturday, end: sunday };
+    return { start: startOfDay(saturday), end: endOfDay(sunday) };
   }
 
+  // Utility to strip time
+  function startOfDay(d) {
+    const n = new Date(d); n.setHours(0,0,0,0); return n;
+  }
+  function endOfDay(d) {
+    const n = new Date(d); n.setHours(23,59,59,999); return n;
+  }
+  
   function isWithinDateRange(
     itemDate: string | Date,
     selected: Date | { start: Date; end: Date }
@@ -78,6 +92,7 @@ export default function Index() {
     if ('start' in selected && 'end' in selected) {
       return d >= selected.start && d <= selected.end;
     }
+    // Single date match (ignoring time)
     return d.toDateString() === new Date(selected).toDateString();
   }
 
@@ -93,6 +108,14 @@ export default function Index() {
     }
     // Single day
     return new Date(selected).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  function getSingleDayRange(date: Date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const end = new Date(d);
+    end.setHours(23, 59, 59, 999);
+    return { start: d, end };
   }
   
   // Weather
@@ -121,7 +144,7 @@ export default function Index() {
   // Ticketmaster
   useEffect(() => {
     setLoadingEvents(true);
-    fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate, filters.maxDistance)
+    fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate.start, selectedDate.end, filters.maxDistance)
       .then(data => {
         setEvents(data);
         console.log("Ticketmaster Events geladen:", data); // <--- HIER
@@ -131,7 +154,7 @@ export default function Index() {
         console.error("Ticketmaster Fehler:", err);        // <--- HIER
       })
       .finally(() => setLoadingEvents(false));
-  }, [currentLocation, selectedDate, filters.maxDistance]);
+  }, [currentLocation, selectedDate.start, selectedDate.end, filters.maxDistance]);
 
   // Merge and filter items
   const mergedItems = [
@@ -231,18 +254,38 @@ export default function Index() {
                 <Calendar className="h-6 w-6 text-nature-orange" />
                 Select Date
               </h2>
-              <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
+              <DatePicker date={selectedDate.start} onDateChange={setSelectedDate(getSingleDayRange(date))} />
               <div className="mt-4 space-y-2">
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())} className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDate(getSingleDayRange(new Date()))}
+                  className="w-full"
+                  >
                   Today
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))} className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDate(getSingleDayRange(new Date(Date.now() + 24 * 60 * 60 * 1000)))}
+                  className="w-full"
+                  >
                   Tomorrow
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getThisWeekendDates(0))} className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDate(getThisWeekendDates(0))}
+                  className="w-full"
+                  >
                   This Weekend
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getThisWeekendDates(1))} className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDate(getThisWeekendDates(1))}
+                  className="w-full"
+                  >
                   Next Weekend
                 </Button>
               </div>
