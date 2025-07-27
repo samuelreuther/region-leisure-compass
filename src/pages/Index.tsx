@@ -55,6 +55,9 @@ export default function Index() {
   const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
+  // NEW: State for pagination
+  const [visibleCount, setVisibleCount] = useState(3);
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -140,10 +143,14 @@ export default function Index() {
     return true;
   });
 
-  // Only top 3
-  const topItems = filteredItems.slice(0, 3);
+  // Only up to visibleCount
+  const topItems = filteredItems.slice(0, visibleCount);
 
-  // Helper for next/this weekend
+  // Reset visibleCount to 3 on filter/location change
+  useEffect(() => {
+    setVisibleCount(3);
+  }, [currentLocation, selectedDate, filters]);
+
   const getSaturday = (addWeeks = 0) => {
     const today = new Date();
     const day = today.getDay();
@@ -266,58 +273,68 @@ export default function Index() {
               {(loadingActivities || loadingEvents || loadingEB) ? (
                 <p>Loading…</p>
               ) : topItems.length > 0 ? (
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {topItems.map(item =>
-                    item.__type === "activity" ? (
-                      <Card key={item.id}>
-                        <CardContent>
-                          <div className="flex items-center gap-2 mb-2">
-                            <SourceBadge type={item.__type} />
-                            <span className="font-bold text-lg">{item.title || item.name}</span>
-                          </div>
-                          <div>{item.location || item.venue}, {item.city}</div>
-                          {item.distance !== null && item.distance !== undefined && (
-                            <div className="text-xs text-muted-foreground mb-1">
-                              {item.distance.toFixed(1)} km away
+                <>
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {topItems.map(item =>
+                      item.__type === "activity" ? (
+                        <Card key={item.id}>
+                          <CardContent>
+                            <div className="flex items-center gap-2 mb-2">
+                              <SourceBadge type={item.__type} />
+                              <span className="font-bold text-lg">{item.title || item.name}</span>
                             </div>
-                          )}
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Details
-                          </a>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Card key={item.id}>
-                        <CardContent>
-                          <div className="flex items-center gap-2 mb-2">
-                            <SourceBadge type={item.__type} />
-                            <span className="font-bold text-lg">{item.title || item.name}</span>
-                          </div>
-                          <div>{item.venue}, {item.city}</div>
-                          <div>{new Date(item.start).toLocaleString("de-DE")}</div>
-                          {item.distance !== null && item.distance !== undefined && (
-                            <div className="text-xs text-muted-foreground mb-1">
-                              {item.distance.toFixed(1)} km away
+                            <div>{item.location || item.venue}, {item.city}</div>
+                            {item.distance !== null && item.distance !== undefined && (
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {item.distance.toFixed(1)} km away
+                              </div>
+                            )}
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              Details
+                            </a>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card key={item.id}>
+                          <CardContent>
+                            <div className="flex items-center gap-2 mb-2">
+                              <SourceBadge type={item.__type} />
+                              <span className="font-bold text-lg">{item.title || item.name}</span>
                             </div>
-                          )}
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Zum Event
-                          </a>
-                        </CardContent>
-                      </Card>
-                    )
+                            <div>{item.venue}, {item.city}</div>
+                            <div>{new Date(item.start).toLocaleString("de-DE")}</div>
+                            {item.distance !== null && item.distance !== undefined && (
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {item.distance.toFixed(1)} km away
+                              </div>
+                            )}
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              Zum Event
+                            </a>
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
+                  </div>
+                  {/* Show More Button */}
+                  {topItems.length < filteredItems.length && (
+                    <div className="flex justify-center mt-8">
+                      <Button variant="secondary" onClick={() => setVisibleCount(visibleCount + 3)}>
+                        Show More
+                      </Button>
+                    </div>
                   )}
-                </div>
+                </>
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-16">
