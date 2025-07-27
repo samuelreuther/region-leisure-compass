@@ -1,19 +1,26 @@
 import { useState, useEffect } from "react";
-import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music } from "lucide-react";
+import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
+import ActivityCard from "@/components/ActivityCard";
 import LocationSearch, { LocationData } from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
 import { DatePicker } from "@/components/DatePicker";
 import DataSourcesInfo from "@/components/DataSourcesInfo";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import heroImage from "@/assets/hero-background.jpg";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
+
+// Platzhalter für echte Aktivitäten aus Supabase oder anderen Quellen
+async function fetchSupabaseActivities(location: LocationData, filters: any) {
+  // Implementiere deinen echten DB/Fetch-Call hier!
+  // Demo: Gibt ein leeres Array zurück, bis Supabase integriert ist
+  return [];
+}
 
 export default function Index() {
   const [currentLocation, setCurrentLocation] = useState<LocationData>({
@@ -31,12 +38,17 @@ export default function Index() {
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
+
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
   const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Wetter laden
   useEffect(() => {
     setLoadingWeather(true);
     fetchWeather(currentLocation.lat, currentLocation.lon)
@@ -45,6 +57,21 @@ export default function Index() {
       .finally(() => setLoadingWeather(false));
   }, [currentLocation]);
 
+  // Activities laden (Supabase oder andere Quellen)
+  const fetchAllActivities = async () => {
+    setLoadingActivities(true);
+    try {
+      const dbActivities = await fetchSupabaseActivities(currentLocation, filters);
+      setActivities(dbActivities || []);
+    } catch {
+      setActivities([]);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+  useEffect(() => { fetchAllActivities(); }, [currentLocation, filters]);
+
+  // Ticketmaster Events laden
   useEffect(() => {
     setLoadingEvents(true);
     fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
@@ -53,6 +80,19 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate]);
 
+  // Activities filtern
+  const filteredActivities = activities.filter(activity => {
+    if (filters.category !== "all" && activity.category !== filters.category) return false;
+    if (filters.familyFriendly && !activity.familyFriendly) return false;
+    if (activity.distance > filters.maxDistance) return false;
+    // Preis-Logik ggf. einbauen
+    return true;
+  });
+
+  // Events filtern (kann noch erweitert werden)
+  const filteredEvents = events;
+
+  // Helper für Weekend Buttons
   const getSaturday = (addWeeks = 0) => {
     const today = new Date();
     const day = today.getDay();
@@ -61,23 +101,11 @@ export default function Index() {
     return saturday;
   };
 
-  // Aktivitäten nach Filtern sortieren
-  const filteredActivities = activities.filter(activity => {
-    if (filters.category !== "all" && activity.category !== filters.category) return false;
-    if (filters.familyFriendly && !activity.familyFriendly) return false;
-    if (activity.distance > filters.maxDistance) return false;
-    if (filters.priceRange !== "all") {
-      // Preis-Logik ggf. hier erweitern
-    }
-    return true;
-  });
-
-
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
@@ -107,16 +135,18 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Main Content */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          {/* Location, Date, Weather */}
+          {/* Standort, Datum, Wetter */}
           <div className="grid md:grid-cols-3 gap-8 mb-12">
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <MapPin className="h-6 w-6 text-nature-green" />
                 Your Location
               </h2>
-              <LocationSearch 
+              <LocationSearch
                 currentLocation={currentLocation}
                 onLocationSelect={setCurrentLocation}
               />
@@ -152,65 +182,96 @@ export default function Index() {
               {!weather && !loadingWeather && <p>Konnte Wetterdaten nicht laden.</p>}
             </div>
           </div>
-          {/* Filter-Sidebar + Events Grid */}
+
+          {/* Filter-Sidebar + Dual-Grid */}
           <div className="grid lg:grid-cols-4 gap-8">
+            {/* Filter Sidebar */}
             <div className="lg:col-span-1">
               <ActivityFilters filters={filters} onFiltersChange={setFilters} />
             </div>
-            <div className="lg:col-span-3">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Music className="h-6 w-6 text-purple-700" />
-                  Events for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-                  }) : 'Selected Date'}
-                </h2>
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" size="sm" onClick={() => setLoadingEvents(true)} disabled={loadingEvents}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingEvents ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </Button>
-                  <span className="text-muted-foreground">
-                    {filteredEvents.length} events found
-                  </span>
+
+            {/* 2 Grids nebeneinander (lg) oder untereinander (md/sm) */}
+            <div className="lg:col-span-3 flex flex-col lg:flex-row gap-8">
+              {/* Activities Grid */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="h-6 w-6 text-nature-green" />
+                  <h2 className="text-2xl font-bold">
+                    Activities
+                  </h2>
                 </div>
+                {loadingActivities ? (
+                  <p>Loading activities…</p>
+                ) : filteredActivities.length > 0 ? (
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredActivities.map((activity) => (
+                      <ActivityCard
+                        key={activity.id}
+                        activity={activity}
+                        onVote={(activityId, type) => {
+                          // Voting-Logik (optional)
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-16">
+                      <div className="text-6xl mb-4">🔍</div>
+                      <h3 className="text-xl font-semibold mb-2">No activities found</h3>
+                      <p className="text-muted-foreground text-center">
+                        Try adjusting your filters or search in a different location to discover more activities.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
+
               {/* Events Grid */}
-              {loadingEvents ? (
-                <p>Loading events…</p>
-              ) : filteredEvents.length > 0 ? (
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredEvents.map((event) => (
-                    <Card key={event.id}>
-                      <CardContent>
-                        <div className="font-bold text-lg mb-2">{event.title}</div>
-                        <div>{event.venue}, {event.city}</div>
-                        <div>{new Date(event.start).toLocaleString("de-DE")}</div>
-                        <a
-                          href={event.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline"
-                        >
-                          Zum Event
-                        </a>
-                      </CardContent>
-                    </Card>
-                  ))}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <Music className="h-6 w-6 text-purple-700" />
+                  <h2 className="text-2xl font-bold">
+                    Events
+                  </h2>
                 </div>
-              ) : (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-16">
-                    <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold mb-2">No events found</h3>
-                    <p className="text-muted-foreground text-center">
-                      Try adjusting your filters or search in a different location to discover more events.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                {loadingEvents ? (
+                  <p>Loading events…</p>
+                ) : filteredEvents.length > 0 ? (
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredEvents.map((event) => (
+                      <Card key={event.id}>
+                        <CardContent>
+                          <div className="font-bold text-lg mb-2">{event.title}</div>
+                          <div>{event.venue}, {event.city}</div>
+                          <div>{new Date(event.start).toLocaleString("de-DE")}</div>
+                          <a
+                            href={event.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            Zum Event
+                          </a>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-16">
+                      <div className="text-6xl mb-4">🔍</div>
+                      <h3 className="text-xl font-semibold mb-2">No events found</h3>
+                      <p className="text-muted-foreground text-center">
+                        Try adjusting your filters or search in a different location to discover more events.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
+
           {/* Info zu Datenquellen */}
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
