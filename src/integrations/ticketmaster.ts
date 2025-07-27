@@ -24,8 +24,9 @@ export async function fetchTicketmasterEvents(
   const d = String(date.getDate()).padStart(2, "0");
   const start = `${y}-${m}-${d}T00:00:00Z`;
   const end = `${y}-${m}-${d}T23:59:59Z`;
+  const radius = filters.maxDistance;
 
-  const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=100&startDateTime=${start}&endDateTime=${end}`;
+  const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radius}&startDateTime=${start}&endDateTime=${end}`;
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
