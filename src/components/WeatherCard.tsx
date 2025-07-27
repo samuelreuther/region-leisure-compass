@@ -48,19 +48,33 @@ const WeatherCard = ({ weather }: WeatherCardProps) => {
     <div className="space-y-3">
       <h4 className="font-medium text-sm text-muted-foreground">{title}</h4>
       <div className="grid grid-cols-4 gap-2">
-        {periods.map((period) => (
-          <div key={period.time} className="text-center p-2 bg-background/50 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-1">{period.time}</p>
-            <div className="flex justify-center mb-1">
-              {getWeatherIcon(normalizeCondition(period.condition), "h-4 w-4")}
-            </div>
-            <p className="text-sm font-medium">{period.temperature}°C</p>
+        {periods.map((period) => {
+      const norm = normalizeCondition(period.condition);
+      const color =
+        norm === "sunny"
+        ? "bg-yellow-100"
+        : norm === "rainy"
+        ? "bg-blue-100"
+        : norm === "cloudy"
+        ? "bg-gray-100"
+        : "bg-white";
+      return (
+        <div
+          key={period.time}
+          className={`text-center p-2 rounded-lg ${color}`}
+          >
+          <p className="text-xs text-muted-foreground mb-1">{period.time}</p>
+          <div className="flex justify-center mb-1">
+            {getWeatherIcon(norm, "h-4 w-4")}
           </div>
-        ))}
+          <p className="text-sm font-medium">{period.temperature}°C</p>
+        </div>
+      );
+    })}
       </div>
     </div>
   );
-
+  
   return (
     <Card className="transition-all duration-300 hover:shadow-lg">
       <CardContent className="p-6">
