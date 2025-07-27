@@ -57,23 +57,20 @@ export default function Index() {
 
   function getThisWeekendDates(offset = 0) {
     const today = new Date();
-    const day = today.getDay(); // 0=Sun, 6=Sat
-    let saturday, sunday;
-    if (day === 0) {
-      // Today is Sunday
-      saturday = new Date(today); // both start and end = Sunday
-      sunday = new Date(today);
-    } else {
-      // Calculate this Saturday
-      saturday = new Date(today);
-      saturday.setDate(today.getDate() + ((6 - day) % 7) + offset * 7);
-      // Sunday is next day
-      sunday = new Date(saturday);
-      sunday.setDate(saturday.getDate() + 1);
-      // If today is Saturday, use today as start
-      if (day === 6) saturday = today;
-    }
-    return { start: startOfDay(saturday), end: endOfDay(sunday) };
+    const day = today.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Samstag dieser oder nächster Woche:
+    const saturday = new Date(today);
+    const deltaToSaturday = ((6 - day + 7) % 7) + offset * 7;
+    saturday.setDate(today.getDate() + deltaToSaturday);
+    
+    const sunday = new Date(saturday);
+    sunday.setDate(saturday.getDate() + 1);
+    
+    return {
+      start: startOfDay(saturday),
+      end: endOfDay(sunday)
+    };
   }
 
   // Utility to strip time
