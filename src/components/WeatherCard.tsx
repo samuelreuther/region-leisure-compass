@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface WeatherPeriod {
   time: string;
   temperature: number;
-  condition: "sunny" | "cloudy" | "rainy" | "snowy";
-  icon: React.ReactNode;
+  condition: string; // Beliebiger API-String!
 }
 
 interface WeatherData {
@@ -16,6 +15,16 @@ interface WeatherData {
 
 interface WeatherCardProps {
   weather: WeatherData;
+}
+
+// Neu!
+function normalizeCondition(raw: string): "sunny" | "cloudy" | "rainy" | "snowy" {
+  const c = raw.toLowerCase();
+  if (c.includes("sun") || c.includes("clear")) return "sunny";
+  if (c.includes("rain") || c.includes("shower") || c.includes("drizzle")) return "rainy";
+  if (c.includes("snow")) return "snowy";
+  if (c.includes("cloud") || c.includes("overcast") || c.includes("fog") || c.includes("mist")) return "cloudy";
+  return "cloudy";
 }
 
 const WeatherCard = ({ weather }: WeatherCardProps) => {
@@ -31,7 +40,7 @@ const WeatherCard = ({ weather }: WeatherCardProps) => {
       case "snowy":
         return <Snowflake className={className} />;
       default:
-        return <Sun className={className} />;
+        return <Cloud className={className} />;
     }
   };
 
@@ -43,7 +52,7 @@ const WeatherCard = ({ weather }: WeatherCardProps) => {
           <div key={period.time} className="text-center p-2 bg-background/50 rounded-lg">
             <p className="text-xs text-muted-foreground mb-1">{period.time}</p>
             <div className="flex justify-center mb-1">
-              {getWeatherIcon(period.condition, "h-4 w-4")}
+              {getWeatherIcon(normalizeCondition(period.condition), "h-4 w-4")}
             </div>
             <p className="text-sm font-medium">{period.temperature}°C</p>
           </div>
@@ -59,7 +68,6 @@ const WeatherCard = ({ weather }: WeatherCardProps) => {
           <h3 className="font-semibold text-lg text-foreground mb-1">{weather.location}</h3>
           <p className="text-sm text-muted-foreground">Weather Forecast</p>
         </div>
-        
         <div className="space-y-6">
           {renderWeatherPeriods(weather.today, "Today")}
           {renderWeatherPeriods(weather.tomorrow, "Tomorrow")}
