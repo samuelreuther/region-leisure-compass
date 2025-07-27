@@ -42,46 +42,41 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
 export async function fetchEventbriteEvents(
   lat: number,
   lon: number,
-  startDate: Date,
-  radiusKm = 50,
-  maxResults = 12
+  date: Date,
+  radiusKm: number
 ): Promise<EventbriteEvent[]> {
   const token = import.meta.env.VITE_EVENTBRITE_KEY;
-  if (!token) throw new Error("No Eventbrite API token set!");
+  if (!token) throw new Error("No Eventbrite API token found");
 
-  const startStr = startDate.toISOString().slice(0, 10) + "T00:00:00";
-  const end = new Date(startDate);
-  end.setDate(end.getDate() + 1);
-  const endStr = end.toISOString().slice(0, 10) + "T23:59:59";
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
 
-  const url = `https://www.eventbriteapi.com/v3/events/search/?location.latitude=${lat}&location.longitude=${lon}&location.within=${radiusKm}km&start_date.range_start=${startStr}Z&start_date.range_end=${endStr}Z&expand=venue,category,logo&sort_by=date&token=${token}`;
+  const startStr = encodeURIComponent(start.toISOString());
+  const endStr = encodeURIComponent(end.toISOString());
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch Eventbrite events");
-  const data = await res.json();
+  const url = `https://www.eventbriteapi.com/v3/events/search/?location.latitude=${lat}&location.longitude=${lon}&location.within=${radiusKm}km&start_date.range_start=${startStr}&start_date.range_end=${endStr}&expand=venue,category,logo&sort_by=date`;
 
-  return (data.events || []).slice(0, maxResults).map((e: any) => {
-    const venueLat = parseFloat(e.venue?.address?.latitude) || 0;
-    const venueLon = parseFloat(e.venue?.address?.longitude) || 0;
-    const distance =
-      venueLat && venueLon
-        ? haversine(lat, lon, venueLat, venueLon)
-        : null;
-    return {
-      id: e.id,
-      name: e.name.text,
-      description: e.description?.text || "",
-      url: e.url,
-      start: e.start.local,
-      end: e.end.local,
-      city: e.venue?.address?.city || "",
-      venue: e.venue?.name || "",
-      image: e.logo?.url || null,
-      price: e.is_free ? "Free" : null,
-      category: e.category?.name || null,
-      lat: venueLat,
-      lon: venueLon,
-      distance,
-    };
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
+  if (!response.ok) {
+    throw new Error("Failed to fetch Eventbrite events");
+  }
+  const data = await response.json();
+  // Transformiere die Events für dein Frontend
+  return (data.events || []).map((ev: any) => ({
+    id: ev.id,
+    name: ev.name.text,
+    title: ev.name.text,
+    url: ev.url,
+    start: ev.start.local || ev.start.utc,
+    venue: ev.venue?.name || "",
+    city: ev.venue?.address?.city || "",
+    logo: ev.logo?.url,
+    distance: ev.distance ?? null,
+  }));
 }
