@@ -55,7 +55,7 @@ export default function Index() {
   const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  // NEW: State for pagination
+  // State for pagination
   const [visibleCount, setVisibleCount] = useState(3);
 
   const { user } = useAuth();
