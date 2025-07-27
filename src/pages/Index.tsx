@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
 import ActivityCard from "@/components/ActivityCard";
-import LocationSearch from "@/components/LocationSearch";
+import LocationSearch, { LocationData } from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
 import { DatePicker } from "@/components/DatePicker";
 import DataSourcesInfo from "@/components/DataSourcesInfo";
@@ -16,14 +16,7 @@ import heroImage from "@/assets/hero-background.jpg";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
 
-type LocationData = {
-  name: string;
-  lat: number;
-  lon: number;
-};
-
 export default function Index() {
-  // Location is now an object with name, lat, lon
   const [currentLocation, setCurrentLocation] = useState<LocationData>({
     name: "Lörrach, Germany",
     lat: 47.6149,
@@ -46,7 +39,7 @@ export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Wetterdaten für aktuelle Koordinaten laden
+  // Wetterdaten laden
   useEffect(() => {
     setLoadingWeather(true);
     fetchWeather(currentLocation.lat, currentLocation.lon)
@@ -55,7 +48,7 @@ export default function Index() {
       .finally(() => setLoadingWeather(false));
   }, [currentLocation]);
 
-  // Activities-Demo (wie gehabt)
+  // Activities-Demo
   const mockActivities = [/* ...deine Mockdaten... */];
   const fetchAllActivities = async () => {
     setLoadingActivities(true);
@@ -69,7 +62,7 @@ export default function Index() {
   };
   useEffect(() => { fetchAllActivities(); }, [currentLocation, filters.maxDistance]);
 
-  // Events für Koordinaten & Datum laden (alle Typen!)
+  // Events für Koordinaten & Datum laden
   useEffect(() => {
     setLoadingEvents(true);
     fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
@@ -78,10 +71,18 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate]);
 
-  // UI: LocationSearch muss ein Objekt zurückgeben!
+  // Helper für "This Weekend"/"Next Weekend"
+  const getSaturday = (addWeeks = 0) => {
+    const today = new Date();
+    const day = today.getDay();
+    const saturday = new Date(today);
+    saturday.setDate(today.getDate() + ((6 - day + 7) % 7) + 7 * addWeeks);
+    return saturday;
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section ... */}
+      {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -136,7 +137,40 @@ export default function Index() {
                 Select Date
               </h2>
               <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
-              {/* Button für Today, Tomorrow, etc. wie gehabt */}
+              <div className="mt-4 space-y-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(new Date())}
+                  className="w-full"
+                >
+                  Today
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))}
+                  className="w-full"
+                >
+                  Tomorrow
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(getSaturday(0))}
+                  className="w-full"
+                >
+                  This Weekend
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(getSaturday(1))}
+                  className="w-full"
+                >
+                  Next Weekend
+                </Button>
+              </div>
             </div>
             {/* Weather */}
             <div>
