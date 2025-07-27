@@ -57,22 +57,33 @@ export default function Index() {
 
   function getThisWeekendDates(offset = 0) {
     const today = new Date();
-    const day = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const day = today.getDay(); // 0 = So, 6 = Sa
     
-    // Samstag dieser oder nächster Woche:
-    const saturday = new Date(today);
-    const deltaToSaturday = ((6 - day + 7) % 7) + offset * 7;
-    saturday.setDate(today.getDate() + deltaToSaturday);
+    let saturday, sunday;
     
-    const sunday = new Date(saturday);
-    sunday.setDate(saturday.getDate() + 1);
+    if (day === 6) {
+      // Heute ist Samstag → Samstag + Sonntag
+      saturday = new Date(today);
+      sunday = new Date(today);
+      sunday.setDate(saturday.getDate() + 1);
+    } else if (day === 0) {
+      // Heute ist Sonntag → Nur heute
+      saturday = new Date(today);
+      sunday = new Date(today);
+    } else {
+      // Wochentage → Finde Samstag dieser Woche + Sonntag
+      saturday = new Date(today);
+      saturday.setDate(today.getDate() + ((6 - day) + offset * 7));
+      sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+    }
     
     return {
       start: startOfDay(saturday),
       end: endOfDay(sunday)
     };
   }
-
+  
   // Utility to strip time
   function startOfDay(d) {
     const n = new Date(d); n.setHours(0,0,0,0); return n;
