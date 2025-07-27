@@ -10,6 +10,9 @@ export interface EventbriteEvent {
   image: string | null;
   price: string | null;
   category: string | null;
+  lat?: number;
+  lon?: number;
+  distance?: number;
 }
 
 export async function fetchEventbriteEvents(
