@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music } from "lucide-react";
+import { MapPin, Compass, Calendar, Star, RefreshCw, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
@@ -7,7 +7,6 @@ import ActivityCard from "@/components/ActivityCard";
 import LocationSearch, { LocationData } from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
 import { DatePicker } from "@/components/DatePicker";
-import DataSourcesInfo from "@/components/DataSourcesInfo";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,9 +14,8 @@ import heroImage from "@/assets/hero-background.jpg";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
 
-// Fetch echte Aktivitäten (DB, Komoot, etc.)
 async function fetchSupabaseActivities(location: LocationData, filters: any) {
-  // TODO: Implementiere DB-Query hier
+  // TODO: Replace with your Supabase/Komoot fetch implementation
   return [];
 }
 
@@ -47,7 +45,6 @@ export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Wetter laden
   useEffect(() => {
     setLoadingWeather(true);
     fetchWeather(currentLocation.lat, currentLocation.lon)
@@ -56,7 +53,6 @@ export default function Index() {
       .finally(() => setLoadingWeather(false));
   }, [currentLocation]);
 
-  // Activities laden
   const fetchAllActivities = async () => {
     setLoadingActivities(true);
     try {
@@ -70,7 +66,6 @@ export default function Index() {
   };
   useEffect(() => { fetchAllActivities(); }, [currentLocation, filters]);
 
-  // Events laden
   useEffect(() => {
     setLoadingEvents(true);
     fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
@@ -79,28 +74,24 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate]);
 
-  // Activities + Events mergen, Type annotieren
   const mergedItems = [
     ...activities.map(a => ({ ...a, __type: "activity" })),
     ...events.map(e => ({
       ...e,
       __type: "event",
-      category: "indoor", // z.B. Events default zu indoor, außer API gibt anderes
-      familyFriendly: true, // je nach Datenquelle
-      distance: e.distance || 0, // falls Event Daten hat
+      category: "indoor", // Example: Default to indoor, change as needed per API
+      familyFriendly: true,
+      distance: e.distance || 0,
     })),
   ];
 
-  // Filterlogik: für beide Typen anwenden
   const filteredItems = mergedItems.filter(item => {
     if (filters.category !== "all" && item.category !== filters.category) return false;
     if (filters.familyFriendly && !item.familyFriendly) return false;
     if (item.distance > filters.maxDistance) return false;
-    // Preis-Logik (für Aktivitäten, Events: Ticketpreis/Freiheit prüfen, falls verfügbar)
     return true;
   });
 
-  // Helper
   const getSaturday = (addWeeks = 0) => {
     const today = new Date();
     const day = today.getDay();
@@ -191,7 +182,7 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Filter-Sidebar + GEMISCHTES Grid */}
+          {/* Filter Sidebar + Mixed Grid */}
           <div className="grid lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
               <ActivityFilters filters={filters} onFiltersChange={setFilters} />
@@ -219,7 +210,7 @@ export default function Index() {
                   </span>
                 </div>
               </div>
-              {/* GEMISCHTES Grid */}
+              {/* Mixed Grid */}
               {(loadingActivities || loadingEvents) ? (
                 <p>Loading…</p>
               ) : filteredItems.length > 0 ? (
@@ -267,14 +258,6 @@ export default function Index() {
                 </Card>
               )}
             </div>
-          </div>
-          {/* Info zu Datenquellen */}
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Info className="h-6 w-6 text-nature-blue" />
-              How We Find Your Activities
-            </h2>
-            <DataSourcesInfo />
           </div>
         </div>
       </section>
