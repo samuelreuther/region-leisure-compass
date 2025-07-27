@@ -87,11 +87,17 @@ export default function Index() {
   // Ticketmaster
   useEffect(() => {
     setLoadingEvents(true);
-    fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
-      .then(setEvents)
-      .catch(() => setEvents([]))
+    fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate, filters.maxDistance)
+      .then(data => {
+        setEvents(data);
+        console.log("Ticketmaster Events geladen:", data); // <--- HIER
+      })
+      .catch(err => {
+        setEvents([]);
+        console.error("Ticketmaster Fehler:", err);        // <--- HIER
+      })
       .finally(() => setLoadingEvents(false));
-  }, [currentLocation, selectedDate]);
+  }, [currentLocation, selectedDate, filters.maxDistance]);
 
   // Eventbrite
   useEffect(() => {
@@ -102,8 +108,14 @@ export default function Index() {
       selectedDate,
       filters.maxDistance
     )
-      .then(setEventbriteEvents)
-      .catch(() => setEventbriteEvents([]))
+      .then(data => {
+        setEventbriteEvents(data);
+        console.log("Eventbrite Events geladen:", data); // <--- HIER LOG
+      })
+      .catch(err => {
+        setEventbriteEvents([]);
+        console.error("Eventbrite Fehler:", err);        // <--- HIER LOG
+      })
       .finally(() => setLoadingEB(false));
   }, [currentLocation, selectedDate, filters.maxDistance]);
 
