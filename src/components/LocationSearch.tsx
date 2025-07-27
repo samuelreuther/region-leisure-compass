@@ -97,7 +97,7 @@ const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchPro
 
       <Card className="p-4">
         <h4 className="font-medium mb-3">Popular regions</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="flex flex-col gap-2">
           {suggestions.map((location) => (
             <Button
               key={location.name}
