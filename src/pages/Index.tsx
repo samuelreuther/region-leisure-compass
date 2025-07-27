@@ -256,9 +256,10 @@ export default function Index() {
               </h2>
               <DatePicker
                 date={selectedDate?.start}
-                onDateChange={(date) =>
+                onDateChange={(date) => {
                   setSelectedDate(date ? { start: date, end: date } : undefined)
-                  />
+                }}
+                />
               <div className="mt-4 space-y-2">
                 <Button
                   variant="outline"
