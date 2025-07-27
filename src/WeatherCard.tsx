@@ -3,7 +3,7 @@ import { Sun, Cloud, CloudRain, Snowflake } from "lucide-react";
 export type WeatherPeriod = {
   time: string;
   temperature: number;
-  condition: "sunny" | "cloudy" | "rainy" | "snowy";
+  condition: string; // beliebiger API-String
 };
 
 export type WeatherData = {
@@ -12,16 +12,17 @@ export type WeatherData = {
   tomorrow: WeatherPeriod[];
 };
 
-// Hilfsfunktion: Entscheidet, ob die Mehrheit „sunny“, „rainy“ oder „cloudy“
-function getDominantCondition(periods: WeatherPeriod[]) {
-  const counts = { sunny: 0, cloudy: 0, rainy: 0, snowy: 0 };
-  periods.forEach(p => counts[p.condition]++);
-  const max = Math.max(...Object.values(counts));
-  const [dom] = Object.entries(counts).find(([_, c]) => c === max) || ["cloudy"];
-  return dom as "sunny" | "cloudy" | "rainy" | "snowy";
+// Hilfsfunktion für API-Strings → 4 Standardwerte
+function normalizeCondition(raw: string): "sunny" | "cloudy" | "rainy" | "snowy" {
+  const c = raw.toLowerCase();
+  if (c.includes("sun") || c.includes("clear")) return "sunny";
+  if (c.includes("rain") || c.includes("shower") || c.includes("drizzle")) return "rainy";
+  if (c.includes("snow")) return "snowy";
+  if (c.includes("cloud") || c.includes("overcast") || c.includes("fog") || c.includes("mist")) return "cloudy";
+  return "cloudy";
 }
 
-// Farben und Icons nach Wetterlage
+// Farb- und Icon-Mapping nach Wetterlage
 function getCardStyle(condition: string) {
   switch (condition) {
     case "sunny":
@@ -33,6 +34,15 @@ function getCardStyle(condition: string) {
     default:
       return { bg: "bg-gray-200", icon: <Cloud className="text-gray-500" size={32} /> };
   }
+}
+
+// Bestimmt den "dominanten" Zustand für den Tages-Background
+function getDominantCondition(periods: WeatherPeriod[]) {
+  const counts = { sunny: 0, cloudy: 0, rainy: 0, snowy: 0 };
+  periods.forEach(p => counts[normalizeCondition(p.condition)]++);
+  const max = Math.max(...Object.values(counts));
+  const [dom] = Object.entries(counts).find(([_, c]) => c === max) || ["cloudy"];
+  return dom as "sunny" | "cloudy" | "rainy" | "snowy";
 }
 
 interface Props {
@@ -50,6 +60,7 @@ const WeatherCard = ({ weather }: Props) => {
 
   return (
     <div>
+      {/* Heute */}
       <div className={`rounded-2xl shadow-lg p-4 mb-4 flex flex-col items-center ${todayStyle.bg}`}>
         <div className="flex items-center gap-2 mb-2">
           {todayStyle.icon}
@@ -60,11 +71,12 @@ const WeatherCard = ({ weather }: Props) => {
             <div key={i} className="flex flex-col items-center">
               <span className="text-xs">{period.time}</span>
               <span className="text-xl font-bold">{period.temperature}°C</span>
-              {getCardStyle(period.condition).icon}
+              {getCardStyle(normalizeCondition(period.condition)).icon}
             </div>
           ))}
         </div>
       </div>
+      {/* Morgen */}
       <div className={`rounded-2xl shadow-lg p-4 flex flex-col items-center ${tomorrowStyle.bg}`}>
         <div className="flex items-center gap-2 mb-2">
           {tomorrowStyle.icon}
@@ -75,7 +87,7 @@ const WeatherCard = ({ weather }: Props) => {
             <div key={i} className="flex flex-col items-center">
               <span className="text-xs">{period.time}</span>
               <span className="text-xl font-bold">{period.temperature}°C</span>
-              {getCardStyle(period.condition).icon}
+              {getCardStyle(normalizeCondition(period.condition)).icon}
             </div>
           ))}
         </div>
