@@ -3,7 +3,6 @@ import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
-import ActivityCard from "@/components/ActivityCard";
 import LocationSearch, { LocationData } from "@/components/LocationSearch";
 import ActivityFilters from "@/components/ActivityFilters";
 import { DatePicker } from "@/components/DatePicker";
@@ -17,17 +16,12 @@ import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
 
 export default function Index() {
-  // Aktueller Standort als Objekt (Name + Koordinaten)
   const [currentLocation, setCurrentLocation] = useState<LocationData>({
     name: "Lörrach, Germany",
     lat: 47.6149,
     lon: 7.6647,
   });
-
-  // Ausgewähltes Datum (heute als Default)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  // Filter-State für Activities
   const [filters, setFilters] = useState({
     category: "all" as "all" | "outdoor" | "indoor",
     familyFriendly: false,
@@ -35,23 +29,14 @@ export default function Index() {
     priceRange: "all" as "free" | "budget" | "premium" | "all"
   });
 
-  // Aktivitäten (Demo/Mockdaten – später aus DB/API)
-  const [activities, setActivities] = useState<any[]>([]);
-  const [loadingActivities, setLoadingActivities] = useState(false);
-
-  // Wetterdaten + Loading-State
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
-
-  // Events (z. B. von Ticketmaster)
   const [events, setEvents] = useState<TicketmasterEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  // Auth, Toasts (Notifications)
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Wetter laden bei Standort-Änderung
   useEffect(() => {
     setLoadingWeather(true);
     fetchWeather(currentLocation.lat, currentLocation.lon)
@@ -60,21 +45,6 @@ export default function Index() {
       .finally(() => setLoadingWeather(false));
   }, [currentLocation]);
 
-  // Demo: Aktivitäten laden (hier könntest du auch supabase, Komoot etc. einbinden)
-  const mockActivities = [/* ...deine Mockdaten hier... */];
-  const fetchAllActivities = async () => {
-    setLoadingActivities(true);
-    try {
-      setActivities(mockActivities);
-    } catch {
-      setActivities(mockActivities);
-    } finally {
-      setLoadingActivities(false);
-    }
-  };
-  useEffect(() => { fetchAllActivities(); }, [currentLocation, filters.maxDistance]);
-
-  // Ticketmaster-Events laden
   useEffect(() => {
     setLoadingEvents(true);
     fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
@@ -83,7 +53,6 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate]);
 
-  // Helper: Nächster/Übernächster Samstag (This/Next Weekend)
   const getSaturday = (addWeeks = 0) => {
     const today = new Date();
     const day = today.getDay();
@@ -103,22 +72,20 @@ export default function Index() {
     return true;
   });
 
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Hintergrundbild */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
         </div>
-        {/* Login-Button rechts oben */}
         <div className="absolute top-6 right-6 z-10">
           <AuthButton />
         </div>
-        {/* Headline, Slogan, Call to Action */}
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in">
             Discover Your
@@ -134,19 +101,16 @@ export default function Index() {
             Start Exploring
           </Button>
         </div>
-        {/* Scroll-Indikator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-float">
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse" />
           </div>
         </div>
       </section>
-      {/* Main Content */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          {/* Standort, Datum, Wetter */}
+          {/* Location, Date, Weather */}
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {/* Standortwahl */}
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <MapPin className="h-6 w-6 text-nature-green" />
@@ -157,7 +121,6 @@ export default function Index() {
                 onLocationSelect={setCurrentLocation}
               />
             </div>
-            {/* Datumsauswahl inkl. Buttons für Today, Tomorrow, This/Next Weekend */}
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <Calendar className="h-6 w-6 text-nature-orange" />
@@ -165,41 +128,20 @@ export default function Index() {
               </h2>
               <DatePicker date={selectedDate} onDateChange={setSelectedDate} />
               <div className="mt-4 space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setSelectedDate(new Date())}
-                  className="w-full"
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())} className="w-full">
                   Today
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))}
-                  className="w-full"
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date(Date.now() + 24 * 60 * 60 * 1000))} className="w-full">
                   Tomorrow
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setSelectedDate(getSaturday(0))}
-                  className="w-full"
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getSaturday(0))} className="w-full">
                   This Weekend
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setSelectedDate(getSaturday(1))}
-                  className="w-full"
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedDate(getSaturday(1))} className="w-full">
                   Next Weekend
                 </Button>
               </div>
             </div>
-            {/* Wetteranzeige */}
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <Calendar className="h-6 w-6 text-nature-blue" />
@@ -210,116 +152,65 @@ export default function Index() {
               {!weather && !loadingWeather && <p>Konnte Wetterdaten nicht laden.</p>}
             </div>
           </div>
-          
-          {/* Activities Section */}
+          {/* Filter-Sidebar + Events Grid */}
           <div className="grid lg:grid-cols-4 gap-8">
-            {/* Filter-Sidebar (immer sichtbar) */}
             <div className="lg:col-span-1">
-              <ActivityFilters
-                filters={filters}
-                onFiltersChange={setFilters}
-              />
+              <ActivityFilters filters={filters} onFiltersChange={setFilters} />
             </div>
-            {/* Activities Grid */}
             <div className="lg:col-span-3">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Star className="h-6 w-6 text-nature-orange" />
-                  Activities for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  <Music className="h-6 w-6 text-purple-700" />
+                  Events for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
                   }) : 'Selected Date'}
                 </h2>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={fetchAllActivities}
-                    disabled={loadingActivities}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingActivities ? 'animate-spin' : ''}`} />
+                  <Button variant="outline" size="sm" onClick={() => setLoadingEvents(true)} disabled={loadingEvents}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingEvents ? 'animate-spin' : ''}`} />
                     Refresh
                   </Button>
                   <span className="text-muted-foreground">
-                    {filteredActivities.length} activities found
+                    {filteredEvents.length} events found
                   </span>
                 </div>
               </div>
-              {/* Activities Grid/Empty State */}
-              {filteredActivities.length > 0 ? (
+              {/* Events Grid */}
+              {loadingEvents ? (
+                <p>Loading events…</p>
+              ) : filteredEvents.length > 0 ? (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredActivities.map((activity) => (
-                    <ActivityCard 
-                      key={activity.id} 
-                      activity={activity}
-                      onVote={(activityId, type) => {
-                        // Voting-Logik (optional)
-                      }}
-                    />
+                  {filteredEvents.map((event) => (
+                    <Card key={event.id}>
+                      <CardContent>
+                        <div className="font-bold text-lg mb-2">{event.title}</div>
+                        <div>{event.venue}, {event.city}</div>
+                        <div>{new Date(event.start).toLocaleString("de-DE")}</div>
+                        <a
+                          href={event.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          Zum Event
+                        </a>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-16">
                     <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold mb-2">No activities found</h3>
+                    <h3 className="text-xl font-semibold mb-2">No events found</h3>
                     <p className="text-muted-foreground text-center">
-                      Try adjusting your filters or search in a different location to discover more activities.
+                      Try adjusting your filters or search in a different location to discover more events.
                     </p>
-                    <Button 
-                      variant="nature" 
-                      className="mt-4"
-                      onClick={() => setFilters({
-                        category: "all",
-                        familyFriendly: false,
-                        maxDistance: 100,
-                        priceRange: "all"
-                      })}
-                    >
-                      Clear Filters
-                    </Button>
                   </CardContent>
                 </Card>
               )}
             </div>
           </div>
-          
-          {/* Events Section (z. B. Live-Konzerte & mehr) */}
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Music className="h-6 w-6 text-purple-700" />
-              Live Events in {currentLocation.name} am{" "}
-              {selectedDate?.toLocaleDateString("de-DE")}
-            </h2>
-            {loadingEvents && <p>Loading events…</p>}
-            {!loadingEvents && events.length === 0 && (
-              <p>Keine Events gefunden.</p>
-            )}
-            {!loadingEvents && events.length > 0 && (
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {events.map((event) => (
-                  <Card key={event.id}>
-                    <CardContent>
-                      <div className="font-bold text-lg mb-2">{event.title}</div>
-                      <div>{event.venue}, {event.city}</div>
-                      <div>{new Date(event.start).toLocaleString("de-DE")}</div>
-                      <a
-                        href={event.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        Zum Event
-                      </a>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Info zu Datenquellen */}
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
