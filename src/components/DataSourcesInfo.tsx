@@ -52,24 +52,6 @@ const DataSourcesInfo = () => {
       dataTypes: ["Hiking Trails", "Cultural Sites", "Local Events"],
       status: "development",
       icon: <Database className="h-5 w-5" />
-    },
-    {
-      name: "Weather API Integration",
-      type: "API",
-      description: "Real-time weather data to provide weather-appropriate activity recommendations.",
-      coverage: "Global",
-      dataTypes: ["Weather Forecasts", "Activity Suitability"],
-      status: "development",
-      icon: <Wifi className="h-5 w-5" />
-    },
-    {
-      name: "Mock Data (Current)",
-      type: "Manual",
-      description: "Curated sample activities to demonstrate the app's functionality and user interface.",
-      coverage: "Lörrach Region",
-      dataTypes: ["Sample Activities", "Demo Content"],
-      status: "active",
-      icon: <Database className="h-5 w-5" />
     }
   ];
 
