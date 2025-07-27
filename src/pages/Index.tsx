@@ -166,6 +166,8 @@ export default function Index() {
     return saturday;
   };
 
+  console.log({ activities, events, eventbriteEvents, mergedItems, filteredItems, filters });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
