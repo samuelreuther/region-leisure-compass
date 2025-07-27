@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music, Activity } from "lucide-react";
+import { MapPin, Compass, Calendar, Star, Info, RefreshCw, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeatherCard from "@/components/WeatherCard";
@@ -15,10 +15,9 @@ import heroImage from "@/assets/hero-background.jpg";
 import { fetchWeather, WeatherData } from "@/integrations/weather";
 import { fetchTicketmasterEvents, TicketmasterEvent } from "@/integrations/ticketmaster";
 
-// Platzhalter für echte Aktivitäten aus Supabase oder anderen Quellen
+// Fetch echte Aktivitäten (DB, Komoot, etc.)
 async function fetchSupabaseActivities(location: LocationData, filters: any) {
-  // Implementiere deinen echten DB/Fetch-Call hier!
-  // Demo: Gibt ein leeres Array zurück, bis Supabase integriert ist
+  // TODO: Implementiere DB-Query hier
   return [];
 }
 
@@ -57,7 +56,7 @@ export default function Index() {
       .finally(() => setLoadingWeather(false));
   }, [currentLocation]);
 
-  // Activities laden (Supabase oder andere Quellen)
+  // Activities laden
   const fetchAllActivities = async () => {
     setLoadingActivities(true);
     try {
@@ -71,7 +70,7 @@ export default function Index() {
   };
   useEffect(() => { fetchAllActivities(); }, [currentLocation, filters]);
 
-  // Ticketmaster Events laden
+  // Events laden
   useEffect(() => {
     setLoadingEvents(true);
     fetchTicketmasterEvents(currentLocation.lat, currentLocation.lon, selectedDate)
@@ -80,19 +79,28 @@ export default function Index() {
       .finally(() => setLoadingEvents(false));
   }, [currentLocation, selectedDate]);
 
-  // Activities filtern
-  const filteredActivities = activities.filter(activity => {
-    if (filters.category !== "all" && activity.category !== filters.category) return false;
-    if (filters.familyFriendly && !activity.familyFriendly) return false;
-    if (activity.distance > filters.maxDistance) return false;
-    // Preis-Logik ggf. einbauen
+  // Activities + Events mergen, Type annotieren
+  const mergedItems = [
+    ...activities.map(a => ({ ...a, __type: "activity" })),
+    ...events.map(e => ({
+      ...e,
+      __type: "event",
+      category: "indoor", // z.B. Events default zu indoor, außer API gibt anderes
+      familyFriendly: true, // je nach Datenquelle
+      distance: e.distance || 0, // falls Event Daten hat
+    })),
+  ];
+
+  // Filterlogik: für beide Typen anwenden
+  const filteredItems = mergedItems.filter(item => {
+    if (filters.category !== "all" && item.category !== filters.category) return false;
+    if (filters.familyFriendly && !item.familyFriendly) return false;
+    if (item.distance > filters.maxDistance) return false;
+    // Preis-Logik (für Aktivitäten, Events: Ticketpreis/Freiheit prüfen, falls verfügbar)
     return true;
   });
 
-  // Events filtern (kann noch erweitert werden)
-  const filteredEvents = events;
-
-  // Helper für Weekend Buttons
+  // Helper
   const getSaturday = (addWeeks = 0) => {
     const today = new Date();
     const day = today.getDay();
@@ -183,70 +191,59 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Filter-Sidebar + Dual-Grid */}
+          {/* Filter-Sidebar + GEMISCHTES Grid */}
           <div className="grid lg:grid-cols-4 gap-8">
-            {/* Filter Sidebar */}
             <div className="lg:col-span-1">
               <ActivityFilters filters={filters} onFiltersChange={setFilters} />
             </div>
-
-            {/* 2 Grids nebeneinander (lg) oder untereinander (md/sm) */}
-            <div className="lg:col-span-3 flex flex-col lg:flex-row gap-8">
-              {/* Activities Grid */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-4">
-                  <Activity className="h-6 w-6 text-nature-green" />
-                  <h2 className="text-2xl font-bold">
-                    Activities
-                  </h2>
+            <div className="lg:col-span-3">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Star className="h-6 w-6 text-nature-orange" />
+                  Activities & Events for {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                  }) : 'Selected Date'}
+                </h2>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchAllActivities}
+                    disabled={loadingActivities}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingActivities ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <span className="text-muted-foreground">
+                    {filteredItems.length} items found
+                  </span>
                 </div>
-                {loadingActivities ? (
-                  <p>Loading activities…</p>
-                ) : filteredActivities.length > 0 ? (
-                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredActivities.map((activity) => (
+              </div>
+              {/* GEMISCHTES Grid */}
+              {(loadingActivities || loadingEvents) ? (
+                <p>Loading…</p>
+              ) : filteredItems.length > 0 ? (
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredItems.map(item =>
+                    item.__type === "activity" ? (
                       <ActivityCard
-                        key={activity.id}
-                        activity={activity}
+                        key={item.id}
+                        activity={item}
                         onVote={(activityId, type) => {
-                          // Voting-Logik (optional)
+                          // Voting-Logik optional
                         }}
                       />
-                    ))}
-                  </div>
-                ) : (
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                      <div className="text-6xl mb-4">🔍</div>
-                      <h3 className="text-xl font-semibold mb-2">No activities found</h3>
-                      <p className="text-muted-foreground text-center">
-                        Try adjusting your filters or search in a different location to discover more activities.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Events Grid */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-4">
-                  <Music className="h-6 w-6 text-purple-700" />
-                  <h2 className="text-2xl font-bold">
-                    Events
-                  </h2>
-                </div>
-                {loadingEvents ? (
-                  <p>Loading events…</p>
-                ) : filteredEvents.length > 0 ? (
-                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredEvents.map((event) => (
-                      <Card key={event.id}>
+                    ) : (
+                      <Card key={item.id}>
                         <CardContent>
-                          <div className="font-bold text-lg mb-2">{event.title}</div>
-                          <div>{event.venue}, {event.city}</div>
-                          <div>{new Date(event.start).toLocaleString("de-DE")}</div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Music className="h-5 w-5 text-purple-700" />
+                            <span className="font-bold text-lg">{item.title}</span>
+                          </div>
+                          <div>{item.venue}, {item.city}</div>
+                          <div>{new Date(item.start).toLocaleString("de-DE")}</div>
                           <a
-                            href={event.url}
+                            href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 underline"
@@ -255,23 +252,22 @@ export default function Index() {
                           </a>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-16">
-                      <div className="text-6xl mb-4">🔍</div>
-                      <h3 className="text-xl font-semibold mb-2">No events found</h3>
-                      <p className="text-muted-foreground text-center">
-                        Try adjusting your filters or search in a different location to discover more events.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-16">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold mb-2">No activities or events found</h3>
+                    <p className="text-muted-foreground text-center">
+                      Try adjusting your filters or search in a different location to discover more.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
-
           {/* Info zu Datenquellen */}
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
