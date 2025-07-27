@@ -18,16 +18,19 @@ export async function fetchTicketmasterEvents(
   lon: number,
   start: Date, 
   end: Date,
-  radiusKm = 100 // <--- always gets passed in!
+  radiusKm = 100
 ): Promise<TicketmasterEvent[]> {
-  // Date range for one day
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const start = `${y}-${m}-${d}T00:00:00Z`;
-  const end = `${y}-${m}-${d}T23:59:59Z`;
+  // Format start and end to YYYY-MM-DDTHH:MM:SSZ
+  const format = (d: Date, h: number, m: number, s: number, ms: number) => {
+    const dt = new Date(d);
+    dt.setHours(h, m, s, ms);
+    return dt.toISOString().slice(0, 19) + "Z";
+  };
 
-  const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radiusKm}&startDateTime=${start}&endDateTime=${end}`;
+  const startIso = format(start, 0, 0, 0, 0);
+  const endIso   = format(end, 23, 59, 59, 999);
+
+  const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=${radiusKm}&startDateTime=${startIso}&endDateTime=${endIso}`;
 
   const res = await fetch(url);
   if (!res.ok) return [];
@@ -43,3 +46,4 @@ export async function fetchTicketmasterEvents(
     image: e.images?.[0]?.url || "",
   }));
 }
+
