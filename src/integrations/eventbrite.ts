@@ -16,6 +16,16 @@ export interface EventbriteEvent {
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
+  // Fallback if any coordinate is missing or not a number
+  if (
+    typeof lat1 !== "number" ||
+    typeof lon1 !== "number" ||
+    typeof lat2 !== "number" ||
+    typeof lon2 !== "number" ||
+    isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)
+  ) {
+    return 100; // Fallback value (100km)
+  }
   const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
