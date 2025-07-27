@@ -4,25 +4,55 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+export type LocationData = {
+  name: string;
+  lat: number;
+  lon: number;
+};
+
 interface LocationSearchProps {
-  onLocationSelect: (location: string) => void;
-  currentLocation: string;
+  onLocationSelect: (location: LocationData) => void;
+  currentLocation: LocationData;
 }
+
+const suggestions: LocationData[] = [
+  { name: "Lörrach, Germany", lat: 47.6149, lon: 7.6647 },
+  { name: "Basel, Switzerland", lat: 47.5596, lon: 7.5886 },
+  { name: "Freiburg, Germany", lat: 47.9990, lon: 7.8421 },
+];
 
 const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions] = useState([
-    "Lörrach, Germany",
-    "Basel, Switzerland", 
-    "Freiburg, Germany",
-    "Strasbourg, France",
-    "Colmar, France",
-    "Baden-Baden, Germany"
-  ]);
 
-  const handleSearch = () => {
+  // Geocoding-Funktion (wie vorher, OSM/Nominatim)
+  async function geocode(query: string) {
+    const q = encodeURIComponent(query);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`;
+    const res = await fetch(url, { headers: { "User-Agent": "region-leisure-compass/1.0 (mail@example.com)" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.length) return null;
+    return {
+      name: data[0].display_name,
+      lat: parseFloat(data[0].lat),
+      lon: parseFloat(data[0].lon),
+    } as LocationData;
+  }
+
+  const handleSearch = async () => {
     if (searchQuery.trim()) {
-      onLocationSelect(searchQuery);
+      // Zuerst: Ist es ein bekannter Ort? (nutze Suggestions)
+      const known = suggestions.find(l => 
+        l.name.toLowerCase() === searchQuery.trim().toLowerCase()
+      );
+      if (known) {
+        onLocationSelect(known);
+        setSearchQuery("");
+        return;
+      }
+      // Sonst: Geocode für beliebige Orte
+      const geo = await geocode(searchQuery);
+      if (geo) onLocationSelect(geo);
       setSearchQuery("");
     }
   };
