@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+// NEU: Klarer Location-Typ
 export type LocationData = {
   name: string;
   lat: number;
@@ -15,10 +16,14 @@ interface LocationSearchProps {
   currentLocation: LocationData;
 }
 
+// NEU: Suggestions mit Koordinaten!
 const suggestions: LocationData[] = [
   { name: "Lörrach, Germany", lat: 47.6149, lon: 7.6647 },
   { name: "Basel, Switzerland", lat: 47.5596, lon: 7.5886 },
   { name: "Freiburg, Germany", lat: 47.9990, lon: 7.8421 },
+  { name: "Strasbourg, France", lat: 48.5734, lon: 7.7521 },
+  { name: "Colmar, France", lat: 48.0792, lon: 7.3585 },
+  { name: "Baden-Baden, Germany", lat: 48.7606, lon: 8.2398 },
 ];
 
 const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchProps) => {
@@ -84,7 +89,12 @@ const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchPro
       {currentLocation && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
-          <span>Current location: {currentLocation}</span>
+          <span>
+            Current location: {currentLocation.name}{" "}
+            <span className="text-xs text-gray-400">
+              ({currentLocation.lat.toFixed(3)},{currentLocation.lon.toFixed(3)})
+            </span>
+          </span>
         </div>
       )}
 
@@ -93,13 +103,13 @@ const LocationSearch = ({ onLocationSelect, currentLocation }: LocationSearchPro
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {suggestions.map((location) => (
             <Button
-              key={location}
+              key={location.name}
               variant="ghost"
               size="sm"
               onClick={() => onLocationSelect(location)}
               className="justify-start text-left h-auto p-2"
             >
-              {location}
+              {location.name}
             </Button>
           ))}
         </div>
