@@ -136,9 +136,16 @@ export default function Index() {
     })),
   ];
 
+  // const filteredItems = mergedItems.filter(item => {
+    // if (filters.category !== "all" && item.category !== filters.category) return false;
+    // if (filters.familyFriendly && !item.familyFriendly) return false;
+    // if (item.__type === "activity" && item.distance > filters.maxDistance) return false;
+    // return true;
+  // });
   const filteredItems = mergedItems.filter(item => {
     if (filters.category !== "all" && item.category !== filters.category) return false;
     if (filters.familyFriendly && !item.familyFriendly) return false;
+    // Only filter by distance for activities, not events unless distance is provided and valid (>0)
     if (item.__type === "activity" && item.distance > filters.maxDistance) return false;
     return true;
   });
