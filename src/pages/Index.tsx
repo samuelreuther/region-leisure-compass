@@ -155,7 +155,7 @@ export default function Index() {
     if (filters.familyFriendly && !item.familyFriendly) return false;
     if (item.__type === "activity" && item.distance > filters.maxDistance) return false;
     if (item.start || item.date) {
-      if (!isWithinDateRange(item.start || item.date, weekendRange)) return false;
+      if (!isWithinDateRange(item.start || item.date, selectedDate)) return false;
     }
     return true;
   });
